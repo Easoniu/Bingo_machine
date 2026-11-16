@@ -22,11 +22,12 @@ export default async function handler(req, res) {
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
-                'model': 's2.1-pro-free' // 指定使用 s2.1-pro-free 模型
+                'model': 's2.1-pro-free'
             },
             body: JSON.stringify({
                 text: `${name}`,
-                format: 'mp3'
+                format: 'mp3',
+                reference_id: '377798467cad4fee8d377676e7b5855f' // 指定的自訂語音 ID
             })
         });
 
