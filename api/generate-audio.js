@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-    // 允許跨域請求
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     
@@ -18,13 +17,12 @@ export default async function handler(req, res) {
     }
 
     try {
-        // 呼叫 Fish Audio API 生成語音
         const response = await fetch('https://api.fish.audio/v1/tts', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
-                'Model': 'tts-1' // 依你的 Fish Audio 模型調整
+                'Model': 'tts-1'
             },
             body: JSON.stringify({
                 text: `${name}`,
