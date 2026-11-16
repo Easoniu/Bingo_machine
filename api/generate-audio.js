@@ -22,7 +22,7 @@ export default async function handler(req, res) {
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
-                'Model': 'tts-1'
+                'model': 's2.1-pro-free' // 指定使用 s2.1-pro-free 模型
             },
             body: JSON.stringify({
                 text: `${name}`,
@@ -31,7 +31,8 @@ export default async function handler(req, res) {
         });
 
         if (!response.ok) {
-            throw new Error(`Fish Audio API failed with status ${response.status}`);
+            const errText = await response.text();
+            throw new Error(`Fish Audio API failed with status ${response.status}: ${errText}`);
         }
 
         const audioBuffer = await response.arrayBuffer();
