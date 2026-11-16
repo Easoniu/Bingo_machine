@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>賓果機</title>
+    <title>賓果機 - Vercel & Fish Audio 版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="shortcut icon" href="favicon.png" type="image/png">
     <style>
         @keyframes popIn {
             0% { opacity: 0; transform: scale(0.92) translateY(10px); }
@@ -18,8 +19,23 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
-        .animate-pop-in { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .animate-fade-in { animation: fadeIn 0.25s ease-out forwards; }
+        .animate-pop-in {
+            animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d4d4d4;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body class="bg-neutral-50 text-neutral-900 h-screen w-screen flex flex-col items-center justify-center overflow-hidden p-3 sm:p-4">
@@ -27,7 +43,8 @@
     <div id="main-container" class="max-w-md w-full bg-white border border-neutral-200 rounded-2xl shadow-sm p-4 sm:p-6 transition-all duration-300 flex flex-col box-border">
         
         <h1 class="text-xl font-semibold tracking-tight text-center mb-1 text-neutral-800">賓果機</h1>
-        <p class="text-center text-xs text-neutral-500 mb-4">Vercel + Fish Audio 雲端串流版</p>
+        <p class="text-center text-xs text-neutral-500 mb-1">Fish Audio 雲端 AI 語音版</p>
+        <p class="text-center text-xs text-neutral-500 mb-4">開發中內容，不代表最終品質</p>
 
         <div id="home-view" class="space-y-6 animate-fade-in">
             <div id="host-section" class="space-y-3">
@@ -45,11 +62,11 @@
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-medium text-neutral-500 mb-1.5 uppercase tracking-wider">你的暱稱</label>
-                    <input type="text" id="username" class="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3.5 py-2.5 text-sm outline-none" placeholder="例如：67小孩">
+                    <input type="text" id="username" class="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3.5 py-2.5 text-sm focus:bg-white focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 outline-none transition" placeholder="例如：67小孩">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-neutral-500 mb-1.5 uppercase tracking-wider">頻道代碼</label>
-                    <input type="text" id="room-code-input" class="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3.5 py-2.5 text-sm uppercase tracking-wider outline-none" placeholder="輸入 4 碼代碼">
+                    <input type="text" id="room-code-input" class="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3.5 py-2.5 text-sm uppercase tracking-wider focus:bg-white focus:ring-1 focus:ring-neutral-900 focus:border-neutral-900 outline-none transition" placeholder="輸入 4 碼代碼">
                 </div>
                 <button type="button" id="join-btn" onclick="joinRoom()" class="w-full bg-white border border-neutral-300 text-neutral-700 font-medium text-sm py-3 rounded-lg hover:bg-neutral-50 active:scale-[0.98] transition">
                     加入頻道
@@ -59,13 +76,43 @@
 
         <div id="settings-view" class="hidden space-y-4 animate-fade-in">
             <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wider border-b pb-2">⚙️ 頻道詳細設定</h2>
+            
             <div>
                 <label class="block text-xs font-medium text-neutral-500 mb-1.5 uppercase tracking-wider">頻道名稱</label>
                 <input type="text" id="room-title-input" placeholder="例如：賓果派對" class="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3.5 py-2.5 text-sm outline-none">
             </div>
+
+            <div>
+                <label class="block text-xs font-medium text-neutral-500 mb-1.5 uppercase tracking-wider">數字範圍</label>
+                <select id="max-number-select" class="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3.5 py-2.5 text-sm outline-none">
+                    <option value="75" selected>1 ~ 75 (標準美式)</option>
+                    <option value="99">1 ~ 99 (大範圍)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-neutral-500 mb-1.5 uppercase tracking-wider">玩家數量上限 (上限為100人)</label>
+                <input type="number" id="setting-max-players" value="50" min="1" max="100" oninput="updateWinnerMax()" class="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3.5 py-2.5 text-sm outline-none">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-neutral-500 mb-1.5 uppercase tracking-wider">賓果連線數</label>
+                    <select id="setting-target-lines" class="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3.5 py-2.5 text-sm outline-none">
+                        <option value="1">1 條線</option>
+                        <option value="3" selected>3 條線</option>
+                        <option value="5">5 條線</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-neutral-500 mb-1.5 uppercase tracking-wider">獲勝名額</label>
+                    <input type="number" id="setting-max-winners" value="3" min="1" max="50" class="w-full bg-neutral-50 border border-neutral-200 rounded-lg px-3.5 py-2.5 text-sm outline-none">
+                </div>
+            </div>
+
             <div class="pt-3 flex gap-2">
-                <button type="button" onclick="backToHome()" class="w-1/3 bg-neutral-100 text-neutral-600 font-medium text-sm py-2.5 rounded-lg">返回</button>
-                <button type="button" onclick="createRoom()" class="w-2/3 bg-neutral-900 text-white font-medium text-sm py-2.5 rounded-lg">確認建立頻道</button>
+                <button type="button" onclick="backToHome()" class="w-1/3 bg-neutral-100 text-neutral-600 font-medium text-sm py-2.5 rounded-lg hover:bg-neutral-200 active:scale-[0.98] transition">返回</button>
+                <button type="button" onclick="createRoom()" class="w-2/3 bg-neutral-900 text-white font-medium text-sm py-2.5 rounded-lg hover:bg-neutral-800 active:scale-[0.98] transition">確認建立頻道</button>
             </div>
         </div>
 
@@ -87,37 +134,132 @@
                         <div class="bg-white border border-neutral-200 p-3 rounded-xl text-center space-y-1.5 shadow-sm shrink-0">
                             <span class="text-xs font-semibold text-neutral-500 uppercase tracking-wider block">掃描 QR Code 加入</span>
                             <div id="qrcode-container" class="flex justify-center p-1 bg-white inline-block"></div>
+                            <div id="join-link-text" class="text-[11px] text-neutral-400 font-mono truncate"></div>
                         </div>
+
                         <div class="bg-neutral-900 text-white p-3.5 rounded-xl space-y-2 shrink-0">
-                            <span class="text-xs text-neutral-400 uppercase tracking-wider">線上玩家 (<span id="player-count">0</span>)</span>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-neutral-400 uppercase tracking-wider">線上玩家 (<span id="player-count">0</span> / <span id="max-player-display">50</span>)</span>
+                            </div>
                             <div id="player-list" class="text-xs text-neutral-300 flex flex-wrap gap-1.5 max-h-36 overflow-y-auto"></div>
                         </div>
                     </div>
+
                     <div class="lg:col-span-7 flex flex-col space-y-3 overflow-hidden">
                         <div class="bg-neutral-50 border border-neutral-200 p-3 rounded-xl text-center shrink-0">
                             <span class="text-xs text-neutral-400 uppercase tracking-wider block mb-0.5">目前狀態</span>
                             <div id="host-turn-status" class="text-sm font-medium text-neutral-700">等待開始抽籤...</div>
                         </div>
+
+                        <div class="bg-neutral-50 border border-neutral-200 p-3 rounded-xl flex-1 flex flex-col overflow-hidden">
+                            <span class="text-xs text-neutral-400 uppercase tracking-wider block shrink-0 mb-1.5">🏆 獲勝名單與排名</span>
+                            <div id="host-winners-list" class="space-y-1.5 overflow-y-auto flex-1 pr-1">
+                                <div class="text-neutral-400 text-xs text-center py-1">尚無玩家達標</div>
+                            </div>
+                        </div>
+
                         <div class="bg-neutral-50 border border-neutral-200 p-3 rounded-xl text-center shrink-0">
                             <span class="text-xs text-neutral-400 uppercase tracking-wider block mb-0.5">最新選號結果</span>
                             <div id="host-latest-result" class="text-xl font-bold tracking-tight text-neutral-900">尚未選出數字</div>
                         </div>
+
+                        <div class="bg-neutral-50 border border-neutral-200 p-3 rounded-xl shrink-0">
+                            <span class="text-xs text-neutral-400 uppercase tracking-wider block mb-1">已叫過的數字紀錄</span>
+                            <div id="host-called-list" class="flex flex-wrap gap-1.5 text-xs text-neutral-600 max-h-20 overflow-y-auto items-center">無</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="bg-white border border-neutral-200 p-2.5 rounded-xl flex flex-wrap gap-2 items-center justify-center shrink-0">
-                    <button type="button" onclick="pickRandomPlayer()" class="bg-neutral-900 text-white text-xs font-medium px-3.5 py-2 rounded-lg">抽取玩家</button>
-                    <button type="button" onclick="resetRoomGame()" class="bg-amber-50 text-amber-700 text-xs font-medium px-3.5 py-2 rounded-lg">重新開始</button>
-                    <button type="button" onclick="closeRoom()" class="bg-red-50 text-red-600 text-xs font-medium px-3.5 py-2 rounded-lg">關閉頻道</button>
+                <!-- 主機下方控制列 -->
+                <div class="bg-white border border-neutral-200 p-2.5 rounded-xl flex flex-wrap gap-2 items-center justify-center relative shadow-sm shrink-0">
+                    <button type="button" onclick="pickRandomPlayer()" class="bg-neutral-900 text-white text-xs font-medium px-3.5 py-2 rounded-lg hover:bg-neutral-800 active:scale-[0.98] transition">抽取玩家</button>
+                    <button type="button" onclick="openKickModal()" class="bg-neutral-100 text-neutral-700 text-xs font-medium px-3.5 py-2 rounded-lg hover:bg-neutral-200 active:scale-[0.98] transition">踢出玩家</button>
+                    
+                    <div class="relative">
+                        <button type="button" onclick="toggleAutoMenu()" id="auto-menu-btn" class="bg-neutral-100 text-neutral-700 text-xs font-medium px-3.5 py-2 rounded-lg hover:bg-neutral-200 active:scale-[0.98] transition">自動抽取</button>
+                        <div id="auto-dropdown" class="hidden absolute bottom-full mb-2 left-0 bg-white border border-neutral-200 shadow-lg rounded-xl p-2 w-44 z-20 space-y-1 animate-pop-in">
+                            <button type="button" onclick="setAutoMode('player')" class="w-full text-left text-xs px-3 py-2 rounded hover:bg-neutral-100 transition">抽取玩家</button>
+                            <button type="button" onclick="setAutoMode('number')" class="w-full text-left text-xs px-3 py-2 rounded hover:bg-neutral-100 transition">抽取數字</button>
+                            <button type="button" onclick="setAutoMode('off')" class="w-full text-left text-xs px-3 py-2 rounded hover:bg-red-600 transition">停止抽取</button>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="openAudioSettingsModal()" class="bg-neutral-100 text-neutral-700 text-xs font-medium px-3.5 py-2 rounded-lg hover:bg-neutral-200 active:scale-[0.98] transition">⚙️ 設定</button>
+                    <button type="button" onclick="resetRoomGame()" class="bg-amber-50 text-amber-700 text-xs font-medium px-3.5 py-2 rounded-lg hover:bg-amber-100 active:scale-[0.98] transition">重新開始</button>
+                    <button type="button" onclick="closeRoom()" class="bg-red-50 text-red-600 text-xs font-medium px-3.5 py-2 rounded-lg hover:bg-red-100 active:scale-[0.98] transition">關閉頻道</button>
                 </div>
             </div>
 
+            <!-- 客戶端介面 -->
             <div id="player-view" class="hidden space-y-3 px-1 box-border">
-                <div id="turn-banner" class="bg-neutral-100 border border-neutral-200 text-neutral-700 text-center font-medium text-sm py-2.5 rounded-lg">
+                <div id="turn-banner" class="bg-neutral-100 border border-neutral-200 text-neutral-700 text-center font-medium text-sm py-2.5 rounded-lg transition-all duration-300">
                     等待主機抽籤中...
                 </div>
+
+                <div class="bg-neutral-50 border border-neutral-200 p-3 rounded-xl flex justify-between items-center text-xs">
+                    <div>
+                        <span class="text-neutral-400 block mb-0.5">目前抽取權重 / 機率</span>
+                        <span id="my-probability-text" class="font-bold text-neutral-900 text-sm">計算中...</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-neutral-400 block mb-0.5">未中選保底次數</span>
+                        <span id="my-pick-count" class="font-mono font-semibold text-neutral-700">0 次</span>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-5 gap-2 text-center" id="bingo-board"></div>
+
+                <div class="flex justify-between items-center text-sm">
+                    <span class="font-medium text-neutral-600" id="bingo-status">已達成連線數：0 條</span>
+                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ⚙️ 語音設定彈跳視窗 -->
+    <div id="audio-settings-modal" class="hidden fixed inset-0 bg-neutral-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div class="bg-white border border-neutral-200 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-xl animate-pop-in">
+            <h3 class="text-base font-semibold text-neutral-800">🎙️ 語音播報設定</h3>
+            
+            <div class="space-y-3 text-xs">
+                <div class="flex justify-between items-center bg-neutral-50 p-3 rounded-lg border border-neutral-200">
+                    <span class="font-medium text-neutral-700">語音播報開關</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="setting-voice-enabled" checked class="sr-only peer">
+                        <div class="w-9 h-5 bg-neutral-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-neutral-900"></div>
+                    </label>
+                </div>
+            </div>
+
+            <button type="button" onclick="closeAudioSettingsModal()" class="w-full bg-neutral-900 text-white font-medium py-2.5 rounded-lg hover:bg-neutral-800 active:scale-[0.98] transition text-xs">儲存並關閉</button>
+        </div>
+    </div>
+
+    <div id="action-modal" class="hidden fixed inset-0 bg-neutral-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div class="bg-white border border-neutral-200 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-xl animate-pop-in">
+            <h3 id="modal-title" class="text-base font-semibold text-neutral-800">管理玩家</h3>
+            <div id="modal-player-list" class="space-y-2 max-h-60 overflow-y-auto text-xs"></div>
+            <button type="button" onclick="closeModal()" class="w-full bg-neutral-100 text-neutral-700 font-medium py-2 rounded-lg hover:bg-neutral-200 active:scale-[0.98] transition text-xs">取消</button>
+        </div>
+    </div>
+
+    <div id="custom-modal" class="hidden fixed inset-0 bg-neutral-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div class="bg-white border border-neutral-200 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-xl text-center animate-pop-in">
+            <h3 id="custom-modal-title" class="text-base font-semibold text-neutral-800">提示</h3>
+            <p id="custom-modal-message" class="text-xs text-neutral-600 leading-relaxed"></p>
+            <div id="custom-modal-buttons" class="flex gap-2 pt-2">
+                <button type="button" id="custom-modal-ok" class="w-full bg-neutral-900 text-white font-medium py-2.5 rounded-lg hover:bg-neutral-800 active:scale-[0.98] transition text-xs">確定</button>
+                <button type="button" id="custom-modal-cancel" class="hidden w-1/2 bg-neutral-100 text-neutral-700 font-medium py-2.5 rounded-lg hover:bg-neutral-200 active:scale-[0.98] transition text-xs">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="victory-modal" class="hidden fixed inset-0 bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+        <div class="bg-white border border-neutral-200 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-center animate-pop-in">
+            <div class="text-4xl animate-bounce">🎉</div>
+            <h3 class="text-lg font-bold text-neutral-900">賓果達成！</h3>
+            <p id="victory-text" class="text-xs text-neutral-600 leading-relaxed">你已經成功達成目標連線數！</p>
+            <button type="button" onclick="closeVictoryModal()" class="w-full bg-neutral-900 text-white font-medium py-2.5 rounded-lg hover:bg-neutral-800 active:scale-[0.98] transition text-xs">繼續觀戰 / 查看盤面</button>
         </div>
     </div>
 
@@ -131,7 +273,14 @@
             messagingSenderId: "36025938450",
             appId: "1:36025938450:web:a301f422589ecddc3a5ecb"
         };
-        firebase.initializeApp(firebaseConfig);
+
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+        } catch (e) {
+            console.error("Firebase Init Error:", e);
+        }
         const db = firebase.database();
 
         let currentRoom = null;
@@ -140,25 +289,35 @@
         let isHost = false;
         let maxNum = 75;
         let roomTitle = "賓果派對";
+        let roomSettings = { maxPlayers: 50, targetLines: 3, maxWinners: 3 };
         let boardNumbers = [];
         let markedCells = Array(25).fill(false);
         let currentTurnPlayerId = null;
         let allPlayers = {};
-        
+        let allWinners = {};
+        let calledNumbers = {};
+        let autoTimer = null;
+        let autoTimeout = null;
+        let autoModeState = 'off';
+        let lastResetTime = 0;
+
         let announcementQueue = [];
         let isProcessingQueue = false;
-        let audioCache = {}; // 存放快取音訊 (包含 Fish Audio 生成的玩家名稱與預錄數字)
+        let audioCache = {}; // 內含預錄數字與 Fish Audio 生成的動態玩家名稱音訊
 
-        // 預先載入固定提示音與數字音檔
         function preloadAudioCache() {
-            const files = ['prompt_turn.mp3', 'prompt_selected.mp3', 'number_10.mp3'];
-            for (let i = 1; i <= 10; i++) files.push(`number_${i}.mp3`);
+            const files = ['prompt_turn.mp3', 'prompt_selected.mp3', 'prompt_bingo.mp3', 'prompt_reset.mp3', 'number_10.mp3'];
+            for (let i = 1; i <= 10; i++) {
+                files.push(`number_${i}.mp3`);
+            }
             files.forEach(file => {
-                audioCache[file] = new Audio(`audio/${file}`);
+                const audio = new Audio(`audio/${file}`);
+                audio.preload = 'auto';
+                audioCache[file] = audio;
             });
         }
 
-        // 🚀 當玩家加入時，透過 Vercel 後端向 Fish Audio 請求專屬名稱語音並快取
+        // 🚀 透過 Vercel 後端向 Fish Audio 請求專屬玩家名稱語音並快取
         async function cachePlayerNameAudio(playerName) {
             if (audioCache[`player_${playerName}`]) return;
             try {
@@ -175,8 +334,14 @@
 
         function speakAnnouncement(type, data) {
             if (!isHost) return;
+            const isEnabled = document.getElementById('setting-voice-enabled').checked;
+            if (!isEnabled) return;
+
             announcementQueue.push({ type, data });
-            if (!isProcessingQueue) processAnnouncementQueue();
+
+            if (!isProcessingQueue) {
+                processAnnouncementQueue();
+            }
         }
 
         async function processAnnouncementQueue() {
@@ -202,6 +367,7 @@
             } catch (e) {
                 console.error("播放序列錯誤", e);
             }
+
             processAnnouncementQueue();
         }
 
@@ -227,18 +393,89 @@
             return new Promise((resolve) => {
                 let audio = audioCache[key];
                 if (!audio) {
-                    resolve(); // 若名稱音檔尚未生成完畢則略過，確保流程不卡住
+                    resolve(); // 若名稱語音尚未生成完畢則自動略過，不卡住後續流程
                     return;
                 }
                 audio.currentTime = 0;
                 audio.onended = resolve;
-                audio.onerror = resolve;
-                audio.play().catch(resolve);
+                audio.onerror = (e) => {
+                    console.error("【音檔載入失敗】:", key);
+                    resolve();
+                };
+                audio.play().catch(err => {
+                    console.error("【播放被阻擋】:", err);
+                    resolve();
+                });
+            });
+        }
+
+        function openAudioSettingsModal() {
+            document.getElementById('audio-settings-modal').classList.remove('hidden');
+        }
+
+        function closeAudioSettingsModal() {
+            document.getElementById('audio-settings-modal').classList.add('hidden');
+        }
+
+        function updateWinnerMax() {
+            const maxPlayersInput = document.getElementById('setting-max-players');
+            const maxWinnersInput = document.getElementById('setting-max-winners');
+            const maxPlayers = parseInt(maxPlayersInput.value) || 50;
+            maxWinnersInput.max = maxPlayers;
+            if (parseInt(maxWinnersInput.value) > maxPlayers) {
+                maxWinnersInput.value = maxPlayers;
+            }
+        }
+
+        function showCustomAlert(message, title = "提示") {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-modal');
+                document.getElementById('custom-modal-title').innerText = title;
+                document.getElementById('custom-modal-message').innerText = message;
+                
+                const okBtn = document.getElementById('custom-modal-ok');
+                const cancelBtn = document.getElementById('custom-modal-cancel');
+                cancelBtn.classList.add('hidden');
+                okBtn.className = "w-full bg-neutral-900 text-white font-medium py-2.5 rounded-lg hover:bg-neutral-800 active:scale-[0.98] transition text-xs";
+
+                modal.classList.remove('hidden');
+                okBtn.onclick = () => { modal.classList.add('hidden'); resolve(true); };
+            });
+        }
+
+        function showCustomConfirm(message, title = "確認操作") {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-modal');
+                document.getElementById('custom-modal-title').innerText = title;
+                document.getElementById('custom-modal-message').innerText = message;
+                
+                const okBtn = document.getElementById('custom-modal-ok');
+                const cancelBtn = document.getElementById('custom-modal-cancel');
+                cancelBtn.classList.remove('hidden');
+                okBtn.className = "w-1/2 bg-neutral-900 text-white font-medium py-2.5 rounded-lg hover:bg-neutral-800 active:scale-[0.98] transition text-xs";
+
+                modal.classList.remove('hidden');
+                okBtn.onclick = () => { modal.classList.add('hidden'); resolve(true); };
+                cancelBtn.onclick = () => { modal.classList.add('hidden'); resolve(false); };
             });
         }
 
         window.onload = function() {
-            preloadAudioCache();
+            try {
+                preloadAudioCache();
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const roomParam = urlParams.get('room');
+                if(roomParam) {
+                    const inputEl = document.getElementById('room-code-input');
+                    if(inputEl) inputEl.value = roomParam.toUpperCase();
+                    const hostSection = document.getElementById('host-section');
+                    const dividerSection = document.getElementById('divider-section');
+                    if(hostSection) hostSection.style.display = 'none';
+                    if(dividerSection) dividerSection.style.display = 'none';
+                }
+                updateWinnerMax();
+            } catch(e) { console.error(e); }
         };
 
         function generateNumbers(max) {
@@ -253,6 +490,7 @@
         function goToSettings() {
             document.getElementById('home-view').classList.add('hidden');
             document.getElementById('settings-view').classList.remove('hidden');
+            updateWinnerMax();
         }
 
         function backToHome() {
@@ -262,43 +500,107 @@
 
         function createRoom() {
             roomTitle = document.getElementById('room-title-input').value.trim() || "賓果派對";
+            maxNum = parseInt(document.getElementById('max-number-select').value);
+            
+            const maxPlayers = Math.min(100, Math.max(1, parseInt(document.getElementById('setting-max-players').value) || 50));
+            const targetLines = parseInt(document.getElementById('setting-target-lines').value) || 3;
+            const maxWinners = parseInt(document.getElementById('setting-max-winners').value) || 3;
+
+            if (maxWinners > maxPlayers) {
+                showCustomAlert('獲勝名額不可以大於玩家數量上限！', '設定錯誤');
+                return;
+            }
+
+            roomSettings = { maxPlayers, targetLines, maxWinners };
             isHost = true;
             currentRoom = Math.random().toString(36).substring(2, 6).toUpperCase();
 
+            const timeout = setTimeout(() => {
+                showCustomAlert("連線逾時。如有開啟「內容阻擋器」，請嘗試暫時關閉該網頁的「內容阻擋器」。", "連線失敗");
+            }, 6000);
+
             db.ref('rooms/' + currentRoom).set({
                 roomTitle: roomTitle,
-                maxNum: 75,
+                maxNum: maxNum,
                 currentTurn: null,
                 latestCall: null,
-                calledNumbers: {}
+                calledNumbers: {},
+                settings: roomSettings
             }).then(() => {
+                clearTimeout(timeout);
                 db.ref('rooms/' + currentRoom).onDisconnect().remove();
                 enterGameView();
+            }).catch(err => {
+                clearTimeout(timeout);
+                showCustomAlert('建立頻道失敗：' + err.message, '連線錯誤');
             });
         }
 
         function joinRoom() {
-            myName = document.getElementById('username').value.trim();
-            const code = document.getElementById('room-code-input').value.trim().toUpperCase();
+            const nameInput = document.getElementById('username');
+            const codeInput = document.getElementById('room-code-input');
+            const joinBtn = document.getElementById('join-btn');
+            
+            if(!nameInput || !codeInput) return;
+            myName = nameInput.value.trim();
+            const code = codeInput.value.trim().toUpperCase();
 
-            if(!myName || !code) { alert('請填寫暱稱與房號'); return; }
+            if(!myName) { showCustomAlert('請先輸入你的暱稱！'); return; }
+            if(!code) { showCustomAlert('請輸入頻道代碼！'); return; }
+
+            if(joinBtn) {
+                joinBtn.disabled = true;
+                joinBtn.innerText = "連線中...";
+                joinBtn.className = "w-full bg-neutral-100 border border-neutral-300 text-neutral-400 font-medium text-sm py-3 rounded-lg cursor-not-allowed transition";
+            }
+
+            const timeout = setTimeout(() => {
+                showCustomAlert("連線逾時。如有開啟「內容阻擋器」，請嘗試暫時關閉該網頁的「內容阻擋器」。", "連線受阻");
+                resetJoinButton(joinBtn);
+            }, 6000);
 
             db.ref('rooms/' + code).once('value').then((snapshot) => {
+                clearTimeout(timeout);
                 if(snapshot.exists()) {
+                    const roomData = snapshot.val();
+                    const settings = roomData.settings || { maxPlayers: 50, targetLines: 3, maxWinners: 3 };
+                    const playersCount = roomData.players ? Object.keys(roomData.players).length : 0;
+
+                    if(playersCount >= settings.maxPlayers) {
+                        showCustomAlert('此房間玩家人數已達上限！');
+                        resetJoinButton(joinBtn);
+                        return;
+                    }
+
                     isHost = false;
                     currentRoom = code;
-                    roomTitle = snapshot.val().roomTitle || "賓果派對";
-                    boardNumbers = generateNumbers(75);
+                    maxNum = roomData.maxNum || 75;
+                    roomTitle = roomData.roomTitle || "賓果派對";
+                    roomSettings = settings;
+                    boardNumbers = generateNumbers(maxNum);
                     markedCells = Array(25).fill(false);
 
                     db.ref(`rooms/${currentRoom}/players/${myId}`).set({ name: myName, pickCount: 0 });
-                    db.ref(`rooms/${currentRoom}/players/${myId}`).onDisconnect().remove();
+                    try { db.ref(`rooms/${currentRoom}/players/${myId}`).onDisconnect().remove(); } catch(e) {}
 
                     enterGameView();
                 } else {
-                    alert('找不到此房間');
+                    showCustomAlert('找不到此頻道，請確認代碼是否正確！');
+                    resetJoinButton(joinBtn);
                 }
+            }).catch(err => {
+                clearTimeout(timeout);
+                showCustomAlert('加入失敗：' + err.message, '連線錯誤');
+                resetJoinButton(joinBtn);
             });
+        }
+
+        function resetJoinButton(btn) {
+            if(btn) {
+                btn.disabled = false;
+                btn.innerText = "加入頻道";
+                btn.className = "w-full bg-white border border-neutral-300 text-neutral-700 font-medium text-sm py-3 rounded-lg hover:bg-neutral-50 active:scale-[0.98] transition";
+            }
         }
 
         function enterGameView() {
@@ -306,24 +608,175 @@
             document.getElementById('settings-view').classList.add('hidden');
             document.getElementById('game-view').classList.remove('hidden');
             
+            const container = document.getElementById('main-container');
             if(isHost) {
-                document.getElementById('main-container').classList.remove('max-w-md');
-                document.getElementById('main-container').classList.add('max-w-6xl', 'h-[95vh]');
+                container.classList.remove('max-w-md');
+                container.classList.add('max-w-6xl', 'h-[95vh]');
+                document.getElementById('max-player-display').innerText = roomSettings.maxPlayers;
+            }
+
+            document.getElementById('display-room-code').innerText = currentRoom;
+            document.getElementById('display-room-title').innerText = roomTitle;
+            document.getElementById('display-role-name').innerText = isHost ? '主持人' : myName;
+
+            if(isHost) {
                 document.getElementById('host-view').classList.remove('hidden');
                 generateQRCode();
             } else {
                 document.getElementById('player-view').classList.remove('hidden');
                 renderBoard();
             }
+
             listenGameData();
         }
 
         function generateQRCode() {
-            document.getElementById('qrcode-container').innerHTML = "";
-            new QRCode(document.getElementById('qrcode-container'), {
-                text: window.location.origin + window.location.pathname + "?room=" + currentRoom,
-                width: 120, height: 120
+            const container = document.getElementById('qrcode-container');
+            container.innerHTML = "";
+            const joinUrl = window.location.origin + window.location.pathname + "?room=" + currentRoom;
+            const linkTextEl = document.getElementById('join-link-text');
+            if(linkTextEl) linkTextEl.innerText = joinUrl;
+
+            try {
+                new QRCode(container, {
+                    text: joinUrl,
+                    width: 120,
+                    height: 120,
+                    colorDark: "#171717",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } catch(e) { console.error("QR Code Error:", e); }
+        }
+
+        function toggleAutoMenu() {
+            document.getElementById('auto-dropdown').classList.toggle('hidden');
+        }
+
+        function setAutoMode(mode) {
+            const playerCount = Object.keys(allPlayers).length;
+            const winnerCount = Object.keys(allWinners).length;
+            const maxWinners = roomSettings.maxWinners || 3;
+
+            if (mode !== 'off') {
+                if (playerCount < maxWinners) {
+                    showCustomAlert(`線上玩家人數（${playerCount}人）尚未達到設定的獲勝名額上限（${maxWinners}人），無法啟動自動抽取！`);
+                    return;
+                }
+                if (winnerCount >= maxWinners) {
+                    showCustomAlert('獲勝名額已滿，無法啟動自動抽取！');
+                    return;
+                }
+            }
+
+            autoModeState = mode;
+            const btn = document.getElementById('auto-menu-btn');
+            document.getElementById('auto-dropdown').classList.add('hidden');
+
+            if(autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+            if(autoTimeout) { clearTimeout(autoTimeout); autoTimeout = null; }
+
+            if(mode === 'player') {
+                btn.innerText = "自動抽玩家中";
+                if(isHost && !currentTurnPlayerId) pickRandomPlayer();
+            } else if(mode === 'number') {
+                btn.innerText = "自動抽數字中";
+                autoTimer = setInterval(() => {
+                    if(isHost) {
+                        if (Object.keys(allWinners).length >= (roomSettings.maxWinners || 3)) {
+                            setAutoMode('off');
+                            return;
+                        }
+                        autoPickNumber();
+                    }
+                }, 5000);
+            } else {
+                btn.innerText = "自動抽取";
+            }
+        }
+
+        function autoPickNumber() {
+            let availableNums = [];
+            for(let i=1; i<=maxNum; i++) {
+                if(!calledNumbers[i]) availableNums.push(i);
+            }
+            if(availableNums.length === 0) {
+                showCustomAlert('所有數字都已經抽完了！');
+                setAutoMode('off');
+                return;
+            }
+            const randNum = availableNums[Math.floor(Math.random() * availableNums.length)];
+            db.ref(`rooms/${currentRoom}/calledNumbers/${randNum}`).set(true);
+            db.ref(`rooms/${currentRoom}/latestCall`).set({
+                playerName: "系統自動抽號",
+                number: randNum
             });
+            db.ref(`rooms/${currentRoom}/currentTurn`).set(null);
+        }
+
+        function openKickModal() {
+            showActionModal('踢出玩家', (id, name) => {
+                db.ref(`rooms/${currentRoom}/players/${id}`).remove();
+                closeModal();
+            });
+        }
+
+        function showActionModal(title, actionCallback) {
+            document.getElementById('modal-title').innerText = title;
+            const listEl = document.getElementById('modal-player-list');
+            listEl.innerHTML = '';
+
+            const playerIds = Object.keys(allPlayers);
+            if(playerIds.length === 0) {
+                listEl.innerHTML = '<div class="text-neutral-400 text-center py-2">目前沒有線上玩家</div>';
+            } else {
+                playerIds.forEach(id => {
+                    const p = allPlayers[id];
+                    const row = document.createElement('div');
+                    row.className = 'flex justify-between items-center bg-neutral-50 border border-neutral-200 p-2 rounded-lg';
+                    row.innerHTML = `<span class="font-medium text-neutral-800">${p.name}</span>`;
+                    
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'bg-neutral-900 text-white text-xs px-2.5 py-1 rounded hover:bg-neutral-800 active:scale-[0.95] transition';
+                    btn.innerText = '執行';
+                    btn.onclick = () => actionCallback(id, p.name);
+                    
+                    row.appendChild(btn);
+                    listEl.appendChild(row);
+                });
+            }
+            document.getElementById('action-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('action-modal').classList.add('hidden');
+        }
+
+        async function resetRoomGame() {
+            const confirmed = await showCustomConfirm('確定要重新開始新的一局嗎？這將清空所有叫號與得獎名單，但所有線上玩家會保留。', '重新開始');
+            if(confirmed) {
+                let updates = {
+                    currentTurn: null,
+                    latestCall: null,
+                    calledNumbers: null,
+                    winners: null,
+                    gameResetAt: firebase.database.ServerValue.TIMESTAMP
+                };
+                if (allPlayers) {
+                    Object.keys(allPlayers).forEach(id => {
+                        updates[`players/${id}/pickCount`] = 0;
+                    });
+                }
+                db.ref('rooms/' + currentRoom).update(updates);
+            }
+        }
+
+        async function closeRoom() {
+            const confirmed = await showCustomConfirm('確定要關閉此頻道嗎？所有玩家將中斷連線。', '關閉頻道');
+            if(confirmed) {
+                db.ref('rooms/' + currentRoom).remove().then(() => { location.reload(); });
+            }
         }
 
         function renderBoard() {
@@ -332,61 +785,370 @@
             boardNumbers.forEach((num, index) => {
                 const cell = document.createElement('div');
                 const isMarked = markedCells[index];
-                cell.className = `aspect-square flex items-center justify-center font-semibold text-base rounded-lg ${isMarked ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-800'}`;
-                if(currentTurnPlayerId === myId && !isMarked) {
+                
+                cell.className = `aspect-square flex items-center justify-center font-semibold text-base rounded-lg transition-all duration-300 transform select-none ${isMarked ? 'bg-neutral-900 text-white shadow-sm scale-[0.98]' : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'}`;
+                
+                if(currentTurnPlayerId === myId && !isMarked && !allWinners[myId]) {
                     cell.className += ' cursor-pointer ring-2 ring-neutral-900 animate-pulse';
-                    cell.onclick = () => {
-                        db.ref(`rooms/${currentRoom}/calledNumbers/${num}`).set(true);
-                        db.ref(`rooms/${currentRoom}/latestCall`).set({ playerName: myName, number: num });
-                        db.ref(`rooms/${currentRoom}/currentTurn`).set(null);
-                    };
+                    cell.onclick = () => selectNumber(num);
+                } else {
+                    cell.onclick = null;
                 }
+
                 cell.innerText = num;
                 boardEl.appendChild(cell);
             });
+            checkBingo();
+        }
+
+        function selectNumber(num) {
+            db.ref(`rooms/${currentRoom}/calledNumbers/${num}`).set(true);
+            db.ref(`rooms/${currentRoom}/latestCall`).set({
+                playerName: myName,
+                number: num
+            });
+            db.ref(`rooms/${currentRoom}/currentTurn`).set(null);
         }
 
         function pickRandomPlayer() {
-            const playerIds = Object.keys(allPlayers);
-            if(playerIds.length === 0) return;
-            const randomId = playerIds[Math.floor(Math.random() * playerIds.length)];
+            const playerCount = Object.keys(allPlayers).length;
+            const maxWinners = roomSettings.maxWinners || 3;
+            const winnerCount = Object.keys(allWinners).length;
+
+            if (playerCount < maxWinners) {
+                if (autoModeState !== 'player') showCustomAlert(`線上玩家人數（${playerCount}人）尚未達到設定的獲勝名額上限（${maxWinners}人），無法抽取玩家！`);
+                setAutoMode('off');
+                return;
+            }
+
+            if (winnerCount >= maxWinners) {
+                setAutoMode('off');
+                return;
+            }
+
+            const eligiblePlayerIds = Object.keys(allPlayers).filter(id => !allWinners[id]);
+            if(eligiblePlayerIds.length === 0) {
+                if(autoModeState !== 'player') showCustomAlert('所有線上玩家皆已獲勝！');
+                setAutoMode('off');
+                return;
+            }
+            
+            let maxP = 0;
+            eligiblePlayerIds.forEach(id => {
+                let p = allPlayers[id].pickCount || 0;
+                if (p > maxP) maxP = p;
+            });
+
+            let weightedList = [];
+            eligiblePlayerIds.forEach(id => {
+                let p = allPlayers[id].pickCount || 0;
+                let weight = (maxP - p) + 1;
+                for(let i = 0; i < weight; i++) weightedList.push(id);
+            });
+
+            const randomId = weightedList[Math.floor(Math.random() * weightedList.length)];
+            const chosenPlayer = allPlayers[randomId];
+
+            db.ref(`rooms/${currentRoom}/players/${randomId}/pickCount`).transaction(current => (current || 0) + 1);
             db.ref(`rooms/${currentRoom}/currentTurn`).set({
                 playerId: randomId,
-                playerName: allPlayers[randomId].name
+                playerName: chosenPlayer.name
             });
         }
 
-        let lastTurnId = null;
-        let lastCallKey = null;
+        function calculateAndSyncProbabilities() {
+            if (!isHost) return;
+            const eligiblePlayerIds = Object.keys(allPlayers).filter(id => !allWinners[id]);
+            if (eligiblePlayerIds.length === 0) return;
+
+            let maxP = 0;
+            eligiblePlayerIds.forEach(id => {
+                let p = allPlayers[id].pickCount || 0;
+                if (p > maxP) maxP = p;
+            });
+
+            let totalWeight = 0;
+            let weights = {};
+            eligiblePlayerIds.forEach(id => {
+                let p = allPlayers[id].pickCount || 0;
+                let weight = (maxP - p) + 1;
+                weights[id] = weight;
+                totalWeight += weight;
+            });
+
+            let updates = {};
+            Object.keys(allPlayers).forEach(id => {
+                if (allWinners[id]) {
+                    updates[`players/${id}/probability`] = "已獲勝 (0%)";
+                } else {
+                    let w = weights[id] || 1;
+                    let prob = totalWeight > 0 ? ((w / totalWeight) * 100).toFixed(1) : 0;
+                    updates[`players/${id}/probability`] = `${prob}% (權重 ${w})`;
+                }
+            });
+            db.ref(`rooms/${currentRoom}`).update(updates);
+        }
+
+        function checkAndAutoPickPlayer() {
+            if (!isHost || autoModeState !== 'player') return;
+            if (currentTurnPlayerId) return;
+            
+            if (isProcessingQueue || announcementQueue.length > 0) {
+                autoTimeout = setTimeout(checkAndAutoPickPlayer, 500);
+                return;
+            }
+
+            const winnerCount = Object.keys(allWinners).length;
+            const maxWinners = roomSettings.maxWinners || 3;
+            if (winnerCount >= maxWinners) {
+                setAutoMode('off');
+                return;
+            }
+            pickRandomPlayer();
+        }
+
+        function checkBingo() {
+            if(allWinners[myId]) return;
+
+            let lines = 0;
+            const matrix = [];
+            for(let i=0; i<5; i++) matrix.push(markedCells.slice(i*5, i*5+5));
+
+            for(let i=0; i<5; i++) { if(matrix[i].every(val => val)) lines++; }
+            for(let j=0; j<5; j++) { if([matrix[0][j], matrix[1][j], matrix[2][j], matrix[3][j], matrix[4][j]].every(val => val)) lines++; }
+            if([matrix[0][0], matrix[1][1], matrix[2][2], matrix[3][3], matrix[4][4]].every(val => val)) lines++;
+            if([matrix[0][4], matrix[1][3], matrix[2][2], matrix[3][1], matrix[4][0]].every(val => val)) lines++;
+
+            const target = roomSettings.targetLines || 3;
+            document.getElementById('bingo-status').innerText = `已達成連線數：${lines} / ${target} 條`;
+
+            if(lines >= target && !window.hasBingoed) {
+                window.hasBingoed = true;
+                db.ref(`rooms/${currentRoom}/winners`).once('value').then(snapshot => {
+                    const winners = snapshot.val() || {};
+                    const winnerIds = Object.keys(winners);
+                    const maxWinners = roomSettings.maxWinners || 3;
+
+                    if(winnerIds.length < maxWinners && !winners[myId]) {
+                        const rank = winnerIds.length + 1;
+                        db.ref(`rooms/${currentRoom}/winners/${myId}`).set({
+                            name: myName,
+                            rank: rank,
+                            time: Date.now()
+                        });
+                        triggerVictoryCelebration(rank);
+                    }
+                });
+            }
+        }
+
+        function triggerVictoryCelebration(rank) {
+            const textEl = document.getElementById('victory-text');
+            textEl.innerText = `恭喜你達成目標！你是本場的【第 ${rank} 名】優勝者！`;
+            document.getElementById('victory-modal').classList.remove('hidden');
+
+            const banner = document.getElementById('turn-banner');
+            if(banner) {
+                banner.innerText = `🏆 恭喜！你已獲得本場第 ${rank} 名！`;
+                banner.className = "bg-neutral-900 text-white text-center font-bold text-sm py-3 rounded-lg shadow-sm transition-all duration-300";
+            }
+
+            if(typeof confetti === 'function') {
+                confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+            }
+        }
+
+        function closeVictoryModal() {
+            document.getElementById('victory-modal').classList.add('hidden');
+        }
+
+        let lastSpokenTurnId = null;
+        let lastSpokenCallKey = null;
 
         function listenGameData() {
+            db.ref(`rooms/${currentRoom}`).on('value', (snapshot) => {
+                if(!snapshot.exists() && currentRoom) {
+                    showCustomAlert('頻道已關閉', '通知').then(() => { location.reload(); });
+                }
+            });
+
+            if(!isHost) {
+                db.ref(`rooms/${currentRoom}/players/${myId}`).on('value', (snapshot) => {
+                    if(!snapshot.exists() && currentRoom) {
+                        showCustomAlert('你已被主機踢出頻道', '通知').then(() => { location.reload(); });
+                    }
+                    const data = snapshot.val();
+                    if(data) {
+                        const probText = data.probability || "計算中...";
+                        const pickCount = data.pickCount || 0;
+                        const probEl = document.getElementById('my-probability-text');
+                        const countEl = document.getElementById('my-pick-count');
+                        if(probEl) probEl.innerText = probText;
+                        if(countEl) countEl.innerText = `${pickCount} 次`;
+                    }
+                });
+            }
+
+            db.ref(`rooms/${currentRoom}/gameResetAt`).on('value', (snapshot) => {
+                const val = snapshot.val();
+                if(val) {
+                    if(lastResetTime === 0) {
+                        lastResetTime = val;
+                    } else if(val > lastResetTime) {
+                        lastResetTime = val;
+                        boardNumbers = generateNumbers(maxNum);
+                        markedCells = Array(25).fill(false);
+                        window.hasBingoed = false;
+                        allWinners = {};
+                        lastSpokenTurnId = null;
+                        lastSpokenCallKey = null;
+                        announcementQueue = [];
+                        isProcessingQueue = false;
+                        
+                        const victoryModal = document.getElementById('victory-modal');
+                        if(victoryModal) victoryModal.classList.add('hidden');
+
+                        const banner = document.getElementById('turn-banner');
+                        if(banner && !isHost) {
+                            banner.innerText = "等待主機抽籤中...";
+                            banner.className = "bg-neutral-100 border border-neutral-200 text-neutral-700 text-center font-medium text-sm py-2.5 rounded-lg";
+                        }
+
+                        if(!isHost) {
+                            renderBoard();
+                            showCustomAlert('主持人已重新開始遊戲！已為你產生新的賓果盤。', '遊戲重置');
+                        } else {
+                            const statusEl = document.getElementById('host-turn-status');
+                            if(statusEl) statusEl.innerText = "賓果已重置，等待主持人抽籤";
+                            const latestEl = document.getElementById('host-latest-result');
+                            if(latestEl) latestEl.innerText = "尚未選出數字";
+                        }
+                    }
+                }
+            });
+
             db.ref(`rooms/${currentRoom}/players`).on('value', (snapshot) => {
                 allPlayers = snapshot.val() || {};
                 const listEl = document.getElementById('player-list');
                 const countEl = document.getElementById('player-count');
+                if(!listEl) return;
+                
                 listEl.innerHTML = '';
                 let count = 0;
                 for(let id in allPlayers) {
                     count++;
                     const pName = allPlayers[id].name;
-                    listEl.innerHTML += `<span class="bg-neutral-800 px-2 py-0.5 rounded text-neutral-200">${pName}</span>`;
-                    
-                    // 🎯 玩家加入時，自動觸發 Vercel 後端生成該名稱的 Fish Audio 語音
+                    const tag = document.createElement('span');
+                    tag.className = 'bg-neutral-800 px-2 py-0.5 rounded text-neutral-200 font-medium transition transform hover:scale-105';
+                    tag.innerText = pName;
+                    listEl.appendChild(tag);
+
+                    // 🎯 主機端自動觸發 Fish Audio 後端生成該玩家名稱的專屬語音
                     if (isHost) {
                         cachePlayerNameAudio(pName);
                     }
                 }
                 countEl.innerText = count;
+
+                if (isHost) {
+                    calculateAndSyncProbabilities();
+                }
+
+                if (isHost && currentTurnPlayerId && !allPlayers[currentTurnPlayerId]) {
+                    db.ref(`rooms/${currentRoom}/currentTurn`).set(null);
+                }
+            });
+
+            db.ref(`rooms/${currentRoom}/winners`).on('value', (snapshot) => {
+                allWinners = snapshot.val() || {};
+                const sortedWinners = Object.values(allWinners).sort((a, b) => a.rank - b.rank);
+                const maxWinners = roomSettings.maxWinners || 3;
+
+                if (sortedWinners.length >= maxWinners) {
+                    if (autoModeState !== 'off') setAutoMode('off');
+                    if (isHost) db.ref(`rooms/${currentRoom}/currentTurn`).set(null);
+                }
+
+                if(isHost) {
+                    calculateAndSyncProbabilities();
+                    const winnersListEl = document.getElementById('host-winners-list');
+                    const statusEl = document.getElementById('host-turn-status');
+
+                    if (winnersListEl) {
+                        if (sortedWinners.length === 0) {
+                            winnersListEl.innerHTML = '<div class="text-neutral-400 text-xs text-center py-1">尚無玩家達標</div>';
+                        } else {
+                            winnersListEl.innerHTML = '';
+                            sortedWinners.forEach(w => {
+                                const item = document.createElement('div');
+                                item.className = 'flex justify-between items-center bg-white border border-neutral-200 px-3 py-1.5 rounded-lg text-xs transition-all hover:bg-neutral-50';
+                                item.innerHTML = `
+                                    <span class="font-bold text-neutral-800">👑 第 ${w.rank} 名：${w.name}</span>
+                                    <span class="text-[10px] text-neutral-400 font-mono">${new Date(w.time).toLocaleTimeString()}</span>
+                                `;
+                                winnersListEl.appendChild(item);
+                            });
+                        }
+                    }
+
+                    if(sortedWinners.length >= maxWinners && statusEl) {
+                        statusEl.innerHTML = `<span class="text-rose-600 font-bold">🏁 遊戲結束！獲勝名額已滿</span>`;
+                    }
+                } else {
+                    if (allWinners[myId]) {
+                        const banner = document.getElementById('turn-banner');
+                        if (banner && !banner.innerText.includes('恭喜')) {
+                            banner.innerText = `🏆 恭喜！你已獲得本場第 ${allWinners[myId].rank} 名！`;
+                            banner.className = "bg-neutral-900 text-white text-center font-bold text-sm py-3 rounded-lg shadow-sm";
+                        }
+                        renderBoard();
+                    }
+                }
             });
 
             db.ref(`rooms/${currentRoom}/currentTurn`).on('value', (snapshot) => {
-                const turn = snapshot.val();
-                currentTurnPlayerId = turn ? turn.playerId : null;
-                if (turn && turn.playerId !== lastTurnId) {
-                    lastTurnId = turn.playerId;
-                    speakAnnouncement('turn', turn);
-                } else if (!turn) {
-                    lastTurnId = null;
+                const turnData = snapshot.val();
+                currentTurnPlayerId = turnData ? turnData.playerId : null;
+
+                if (turnData && turnData.playerId !== lastSpokenTurnId) {
+                    lastSpokenTurnId = turnData.playerId;
+                    speakAnnouncement('turn', turnData);
+                } else if (!turnData) {
+                    lastSpokenTurnId = null;
+                }
+
+                if(isHost) {
+                    const statusEl = document.getElementById('host-turn-status');
+                    if(!statusEl) return;
+                    const winnerCount = Object.keys(allWinners).length;
+                    const maxWinners = roomSettings.maxWinners || 3;
+                    if (winnerCount >= maxWinners) return;
+
+                    if(!turnData) {
+                        statusEl.innerText = "等待主持人點擊抽籤";
+                        if(autoModeState === 'player') {
+                            if(autoTimeout) clearTimeout(autoTimeout);
+                            autoTimeout = setTimeout(checkAndAutoPickPlayer, 500);
+                        }
+                    } else {
+                        statusEl.innerText = `🎲 目前抽中玩家：【${turnData.playerName}】正在選號中...`;
+                    }
+                } else {
+                    const banner = document.getElementById('turn-banner');
+                    if(!banner) return;
+                    if (allWinners[myId]) return;
+
+                    if(!turnData) {
+                        banner.innerText = "等待主機抽籤中...";
+                        banner.className = "bg-neutral-100 border border-neutral-200 text-neutral-700 text-center font-medium text-sm py-2.5 rounded-lg";
+                    } else if(turnData.playerId === myId) {
+                        banner.innerText = "輪到你了！請從你的盤面點選一個數字";
+                        banner.className = "bg-neutral-900 text-white text-center font-bold text-sm py-3 rounded-lg shadow-sm animate-pulse";
+                    } else {
+                        banner.innerText = `目前輪到：【${turnData.playerName}】選號中...`;
+                        banner.className = "bg-neutral-100 border border-neutral-200 text-neutral-700 text-center font-medium text-sm py-2.5 rounded-lg";
+                    }
+                    renderBoard();
                 }
             });
 
@@ -394,24 +1156,49 @@
                 const latest = snapshot.val();
                 if (latest) {
                     const callKey = `${latest.playerName}_${latest.number}`;
-                    if (callKey !== lastCallKey) {
-                        lastCallKey = callKey;
+                    if (callKey !== lastSpokenCallKey) {
+                        lastSpokenCallKey = callKey;
                         speakAnnouncement('call', latest);
+                    }
+                }
+
+                if(isHost) {
+                    const latestEl = document.getElementById('host-latest-result');
+                    if(!latestEl) return;
+                    if(latest) {
+                        latestEl.innerText = `【${latest.playerName}】選擇了數字 ${latest.number}`;
+                    } else {
+                        latestEl.innerText = "尚未選出數字";
                     }
                 }
             });
 
             db.ref(`rooms/${currentRoom}/calledNumbers`).on('value', (snapshot) => {
                 calledNumbers = snapshot.val() || {};
-                boardNumbers.forEach((num, index) => {
-                    markedCells[index] = !!calledNumbers[num];
-                });
-                renderBoard();
+                const calledNums = Object.keys(calledNumbers).map(Number);
+
+                if(isHost) {
+                    const listEl = document.getElementById('host-called-list');
+                    if(!listEl) return;
+                    if(calledNums.length === 0) {
+                        listEl.innerText = "無";
+                    } else {
+                        listEl.innerHTML = '';
+                        calledNums.sort((a,b)=>a-b).forEach(num => {
+                            const badge = document.createElement('span');
+                            badge.className = 'bg-neutral-200 text-neutral-800 px-2 py-0.5 rounded font-mono font-semibold transition transform hover:scale-105';
+                            badge.innerText = num;
+                            listEl.appendChild(badge);
+                        });
+                    }
+                } else {
+                    boardNumbers.forEach((num, index) => {
+                        markedCells[index] = !!calledNumbers[num];
+                    });
+                    renderBoard();
+                }
             });
         }
-
-        function resetRoomGame() { db.ref('rooms/' + currentRoom).update({ currentTurn: null, latestCall: null, calledNumbers: null }); }
-        function closeRoom() { db.ref('rooms/' + currentRoom).remove().then(() => location.reload()); }
     </script>
 </body>
 </html>
